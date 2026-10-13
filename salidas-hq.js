@@ -12,11 +12,14 @@
   async function cargar() {
     var sb = window.__ACLLAR_SUPABASE; if (!sb) return false;
     var ses = (await sb.auth.getSession()).data.session; if (!ses) return false;
-    var r = await sb.from("acllar_hq_movimientos").select("ac_id,entrega,estatus,cancelada").eq("cancelada", false).not("entrega", "is", null).limit(20000);
+    var r = await sb.from("acllar_hq_movimientos").select("ac_id,entrega,estatus,cancelada,visto_en_alquiler").eq("cancelada", false).not("entrega", "is", null).limit(20000);
     if (r.error) { console.warn("salidas-hq:", r.error.message); return false; }
-    var m = new Map();
+    var m = new Map(), hoy = new Date(); hoy.setHours(0, 0, 0, 0);
     (r.data || []).forEach(function (x) {
       if (/cancel|presupuesto|pendiente/i.test(x.estatus || "")) return;
+      // Una salida pasada solo cuenta si HQ llegó a marcarla "En Alquiler" (archivo 720).
+      // Las reservas que solo aparecieron en el 704 y cuya fecha ya pasó no llegaron a salir.
+      if (!x.visto_en_alquiler && new Date(x.entrega) < hoy) return;
       var k = base(x.ac_id); if (!m.has(k)) m.set(k, []); m.get(k).push(dia(x.entrega));
     });
     mapa = m; return true;

@@ -48,7 +48,7 @@
       s.from("limpiezas").select("id,ac_id,tamano,empresa,nombre,inicio,fin,estado,tiempo_acumulado_segundos").order("inicio", { ascending: true }).limit(5000),
       s.from("acllar_app_data").select("key,value").eq("owner_id", uid).in("key", ["limpieza-historial", "facturacion-registros", "facturacion-tarifas", "acllar-tamano-por-ac"]),
       s.from("acllar_personal_dia").select("fecha,empresa,nombres").limit(5000),
-      s.from("acllar_hq_movimientos").select("reserva_key,ac_id,entrega,devolucion,lugar,estatus,cancelada").limit(20000)
+      s.from("acllar_hq_movimientos").select("reserva_key,ac_id,entrega,devolucion,lugar,estatus,cancelada,visto_en_alquiler").limit(20000)
     ]);
     if (res[0].error) throw res[0].error; if (res[1].error) throw res[1].error; if (res[2].error) throw res[2].error;
     var kv = {}; (res[1].data || []).forEach(function (r) { try { kv[r.key] = JSON.parse(r.value || "null"); } catch (e) { kv[r.key] = null; } });
@@ -109,7 +109,7 @@
     // HQ
     var hq = null;
     if (hqRows) {
-      hq = hqRows.filter(function (r) { return !r.cancelada && r.entrega && r.devolucion && (!r.lugar || /valencia/i.test(r.lugar)) && !/presupuesto|cancel/i.test(r.estatus || ""); })
+      hq = hqRows.filter(function (r) { return !r.cancelada && r.entrega && r.devolucion && (!r.lugar || /valencia/i.test(r.lugar)) && !/presupuesto|cancel|pendiente/i.test(r.estatus || "") && (r.visto_en_alquiler || localKey(r.entrega) >= today()); })
         .map(function (r) { return { key: r.reserva_key, base: baseAc(r.ac_id), ent: localKey(r.entrega), dev: localKey(r.devolucion) }; });
     }
     var meses = {}; contadas.forEach(function (c) { meses[c.fecha.slice(0, 7)] = 1; }); tiempos.forEach(function (t) { meses[t.fecha.slice(0, 7)] = 1; });
