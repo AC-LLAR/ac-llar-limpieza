@@ -239,8 +239,7 @@ function enhanceNative(){
   const panel=nativePanel();if(!panel)return;
   const {list,rows}=nativeRows(panel);if(!list||!rows.length)return;
   const dayKey=panelDateKey(panel);
-  const order=currentOrder(dayKey);
-  if(order.length)reorderDom(list,rows,orderedIds(rows.map(r=>acFromText(r.textContent)),dayKey));
+  // Orden manual sustituido por orden-dia.js (prioridad en limpieza_plan).
   const hidden=new Set(prefs.ocultosTablet||[]);
   [...list.children].filter(r=>acFromText(r.textContent)).forEach(row=>{
     const id=acFromText(row.textContent);if(!id)return;
@@ -264,7 +263,7 @@ function enhanceNative(){
         else{set.add(id);hide.title="Mostrar en Tablet";hide.replaceChildren(eyeOn())}
         prefs.ocultosTablet=[...set];queueSave();
       };
-      controls.append(up,down,hide);row.appendChild(controls);
+      controls.append(hide);row.appendChild(controls);
     }
     const hide=controls.lastElementChild;
     const isHidden=hidden.has(id);
@@ -292,6 +291,7 @@ function applyTablet(){
   const byParent=new Map();
   visible.forEach(el=>{const p=el.parentElement;if(p)byParent.set(p,[...(byParent.get(p)||[]),el])});
   for(const [parent,items] of byParent){
+    break; // El orden lo da limpieza_plan.prioridad (orden-dia.js); no reordenar el DOM.
     if(items.length<2)continue;
     const order=orderedIds(items.map(x=>acFromText(x.textContent)),todayKey());
     const by=new Map(items.map(x=>[acFromText(x.textContent),x]));
@@ -301,7 +301,7 @@ function applyTablet(){
 async function tick(){
   if(!prefsLoaded)await loadPrefs();
   if(/\/tablet(?:\/|$)/i.test(location.pathname))applyTablet();
-  else { enhanceNative(); enhanceCleaningOrder(); }
+  else { enhanceNative(); document.querySelectorAll("[data-ac-priority-controls]").forEach(x=>x.remove()); }
 }
 tick();setInterval(tick,1000);
 /* AC·LLAR · identificador de sesión y cambio de usuario */
