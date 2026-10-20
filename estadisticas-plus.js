@@ -43,7 +43,7 @@
   // ---------- carga ----------
   async function load() {
     var s = sb(); if (!s) throw new Error("Sin conexión con Supabase");
-    var uid = (await s.auth.getUser()).data.user.id;
+    var uid = (await s.auth.getUser()).data.user ? "b63ed58b-7619-438b-9ebe-497feb3311b5" : null;
     var res = await Promise.all([
       s.from("limpiezas").select("id,ac_id,tamano,empresa,nombre,inicio,fin,estado,tiempo_acumulado_segundos").order("inicio", { ascending: true }).limit(5000),
       s.from("acllar_app_data").select("key,value").eq("owner_id", uid).in("key", ["limpieza-historial", "facturacion-registros", "facturacion-tarifas", "acllar-tamano-por-ac"]),

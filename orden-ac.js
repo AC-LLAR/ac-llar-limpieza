@@ -50,7 +50,7 @@ async function savePrefs(){
   const c=client();if(!c?.from)return;
   try{
     const session=(await c.auth.getSession()).data?.session;
-    const owner=session?.user?.id;if(!owner)return;
+    const owner=session?.user?"b63ed58b-7619-438b-9ebe-497feb3311b5":null;if(!owner)return;
     await c.from("acllar_app_data").upsert({
       owner_id:owner,key:KEY,value:JSON.stringify(prefs),updated_at:new Date().toISOString()
     },{onConflict:"owner_id,key"});
