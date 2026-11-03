@@ -98,7 +98,7 @@ Error generating stack: `+i.message+`
 (0,B.useEffect)(()=>{Ev(wv,t)},[t]);(0,B.useEffect)(()=>{Ev(yv,a)},[a]);
 (0,B.useEffect)(()=>{let active=!0;supabaseClient.auth.getSession().then(({data})=>{if(!active)return;setAuthUser(data.session?.user||null);setAuthReady(!0);data.session?.user&&setTimeout(()=>syncPlan(),0)});let sub=supabaseClient.auth.onAuthStateChange((_e,session)=>{setAuthUser(session?.user||null);setAuthReady(!0);session?.user&&setTimeout(()=>syncPlan(),0)});return()=>{active=!1;sub.data.subscription.unsubscribe()}},[]);
 (0,B.useEffect)(()=>{if(!t.some(J=>J.estado==="en_curso"))return;let ae=setInterval(()=>u(J=>J+1),1e3);return()=>clearInterval(ae)},[t]);
-let p=_v(h3()),v=(0,B.useMemo)(()=>t.filter(j=>_v(new Date(j.inicio))===p),[t,p]),d=(0,B.useMemo)(()=>v.filter(j=>j.estado==="en_curso"||j.estado==="pausada"),[v]),_=(0,B.useMemo)(()=>v.filter(j=>j.estado==="terminada"),[v]),g=(0,B.useMemo)(()=>new Set(),[]),m=(0,B.useMemo)(()=>new Set(d.map(j=>j.acId)),[d]),x=a?a.items:null,A=!x;
+let p=_v(h3()),v=(0,B.useMemo)(()=>t.filter(j=>_v(new Date(j.inicio))===p),[t,p]),d=(0,B.useMemo)(()=>t.filter(j=>j.estado==="en_curso"||j.estado==="pausada"),[t]),_=(0,B.useMemo)(()=>v.filter(j=>j.estado==="terminada"),[v]),g=(0,B.useMemo)(()=>new Set(),[]),m=(0,B.useMemo)(()=>new Set(d.map(j=>j.acId)),[d]),x=a?a.items:null,A=!x;
 let syncPlan=async()=>{
   try{
     let ae=await p3();
@@ -165,7 +165,10 @@ return()=>{
     let {data,error}=await supabaseClient.from("limpiezas").select("id,ac_id,tamano,empresa,nombre,inicio,fin,estado,usuario_id,tiempo_acumulado_segundos,pausada_at,tramo_inicio_at").in("estado",["en_curso","pausada"]).order("inicio",{ascending:!1});
     if(error){console.error("No se pudieron recuperar las sesiones activas:",error.message);return}
     if(!active)return;
-    let rows=(data||[]).map(u=>({id:`S|${u.id}`,dbId:u.id,acId:u.ac_id,tamano:u.tamano||"Grande",empresa:u.empresa||null,nombre:u.nombre||null,inicio:u.inicio?new Date(u.inicio).getTime():Date.now(),fin:null,estado:u.estado,tiempoAcumuladoSegundos:Number(u.tiempo_acumulado_segundos||0),pausadaAt:u.pausada_at?new Date(u.pausada_at).getTime():null,tramoInicioAt:u.estado==="en_curso"?(u.tramo_inicio_at?new Date(u.tramo_inicio_at).getTime():(u.inicio?new Date(u.inicio).getTime():Date.now())):null}));
+    let _op=data||[];
+    if(_op.length){let _mi=_op.reduce((m,u)=>u.inicio<m?u.inicio:m,_op[0].inicio),_r=await supabaseClient.from("limpiezas").select("ac_id,inicio").in("ac_id",[...new Set(_op.map(u=>u.ac_id))]).gte("inicio",_mi);if(!_r.error&&_r.data){_op=_op.filter(u=>!_r.data.some(w=>w.ac_id===u.ac_id&&new Date(w.inicio).getTime()>new Date(u.inicio).getTime()))}}
+    if(!active)return;
+    let rows=_op.map(u=>({id:`S|${u.id}`,dbId:u.id,acId:u.ac_id,tamano:u.tamano||"Grande",empresa:u.empresa||null,nombre:u.nombre||null,inicio:u.inicio?new Date(u.inicio).getTime():Date.now(),fin:null,estado:u.estado,tiempoAcumuladoSegundos:Number(u.tiempo_acumulado_segundos||0),pausadaAt:u.pausada_at?new Date(u.pausada_at).getTime():null,tramoInicioAt:u.estado==="en_curso"?(u.tramo_inicio_at?new Date(u.tramo_inicio_at).getTime():(u.inicio?new Date(u.inicio).getTime():Date.now())):null}));
     n(prev=>[...prev.filter(x=>x.estado!=="en_curso"&&x.estado!=="pausada"),...rows]);
   };
   loadSessions();
